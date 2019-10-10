@@ -1,6 +1,9 @@
 from datetime import datetime
 from thetvdb import get_series_name
 from kitsu import get_anime
+import certifi, requests
+
+requests.packages.urllib3.disable_warnings()
 
 VOICE_LANGUAGES = {
     'de': 'German',
@@ -112,9 +115,7 @@ def update_anime(type, metadata, media, force):
     if (metadata.posters is None or force) and anime['posterImage'] is not None:
         poster_image = anime['posterImage']
         try:
-            thumbnail = Proxy.Preview(HTTP.Request(
-                poster_image['tiny'], immediate = True
-            ).content)
+            thumbnail = Proxy.Preview(requests.get(poster_image['large'], verify=certifi.where()).content)
             metadata.posters[poster_image['large']] = thumbnail
         except:
             Log.Error('Error loading poster - Anime: ' + metadata.id)
@@ -123,9 +124,7 @@ def update_anime(type, metadata, media, force):
         if (metadata.banners is None or force) and anime['coverImage'] is not None:
             cover_image = anime['coverImage']
             try:
-                thumbnail = Proxy.Preview(HTTP.Request(
-                    cover_image['original'], immediate = True
-                ).content)
+                thumbnail = Proxy.Preview(requests.get(cover_image['original'], verify=certifi.where()).content)
                 metadata.banners[cover_image['original']] = thumbnail
             except:
                 Log.Error('Error loading banner - Anime: ' + metadata.id)
@@ -159,9 +158,7 @@ def update_episodes(media, metadata, force, anime, inc_episodes):
             if (episode.thumbs is None or force) and anime['posterImage'] is not None:
                 poster_image = anime['posterImage']
                 try:
-                    thumbnail = Proxy.Preview(HTTP.Request(
-                        poster_image['tiny'], immediate = True
-                    ).content)
+                    thumbnail = Proxy.Preview(requests.get(poster_image['large'], verify=certifi.where()).content)
                     episode.thumbs[poster_image['large']] = thumbnail
                 except:
                     Log.Error('Error loading poster - Anime: ' + metadata.id)
@@ -195,7 +192,7 @@ def update_episodes(media, metadata, force, anime, inc_episodes):
         if (episode.thumbs is None or force) and ep['thumbnail'] is not None:
             thumb_image = ep['thumbnail']['original']
             try:
-                thumbnail = Proxy.Preview(HTTP.Request(thumb_image, immediate = True).content)
+                thumbnail = Proxy.Preview(requests.get(thumb_image, verify=certifi.where()).content)
                 episode.thumbs[thumb_image] = thumbnail
             except:
                 Log.Error('Error loading thumbnail - Anime:Episode: ' +

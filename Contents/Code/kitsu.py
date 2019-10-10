@@ -1,4 +1,9 @@
 from datetime import datetime
+import ssl, urllib2, urllib
+import json
+import certifi, requests
+
+requests.packages.urllib3.disable_warnings()
 
 APIURL = 'https://kitsu.io/api/edge'
 OAUTHURL = 'https://kitsu.io/api/oauth/token'
@@ -33,41 +38,35 @@ def save_token(token):
     Data.Save('kitsu_refresh', token['refresh_token'])
 
 def login(username, password):
-    request = HTTP.Request(
-        OAUTHURL,
-        headers = {
-            'client_id': CLIENT_ID,
-            'client_secret': CLIENT_SECRET
-        },
-        values = {
-            'grant_type': 'password',
-            'username': username,
-            'password': password
-        }
-    )
+    values = {
+        'grant_type': 'password',
+        'username': username,
+        'password': password
+    }
+    headers = {
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET
+    }
     try:
-        request.load()
-        token = JSON.ObjectFromString(request.content)
+        content = requests.post(url, data=values, headers=headers, verify=certifi.where()).text
+        token = JSON.ObjectFromString(content)
         save_token(token)
         return token['access_token']
     except:
         Log.Error('Error logging in to Kitsu')
 
 def refresh(refresh_token):
-    request = HTTP.Request(
-        OAUTHURL,
-        headers = {
-            'client_id': CLIENT_ID,
-            'client_secret': CLIENT_SECRET
-        },
-        values = {
-            'grant_type': 'refresh_token',
-            'refresh_token': refresh_token
-        }
-    )
+    values = {
+        'grant_type': 'refresh_token',
+        'refresh_token': refresh_token,
+    }
+    headers = {
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET
+    }
     try:
-        request.load()
-        token = JSON.ObjectFromString(request.content)
+        content = requests.post(url, data=values, headers=headers, verify=certifi.where()).text
+        token = JSON.ObjectFromString(content)
         save_token(token)
         return token['access_token']
     except:
@@ -120,14 +119,12 @@ def get_anime(id):
     if token is not None:
         headers['Authorization'] = 'Bearer ' + token
 
-    request = HTTP.Request(
-        'https://kitsu.io/api/edge/anime/' + id +
-            '?include=categories,episodes,animeProductions.producer,' +
-            'characters.character,characters.voices.person,staff.person,mappings',
-        headers = headers
-    )
+    url = 'https://kitsu.io/api/edge/anime/' + id +\
+            '?include=categories,episodes,animeProductions.producer,' +\
+            'characters.character,characters.voices.person,staff.person,mappings'
+
     try:
-        request.load()
-        return JSON.ObjectFromString(request.content)
+        content = requests.get(url, headers=headers, verify=certifi.where()).text
+        return JSON.ObjectFromString(content)
     except:
         Log.Error('Error getting anime info')
